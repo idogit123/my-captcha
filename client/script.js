@@ -9,26 +9,41 @@ const promptElem = document.getElementById("prompt");
 async function fetchPrompt() {
     statusDisplay.textContent = "Getting prompt...";
     startBtn.disabled = true;
-    promptElem.textContent = "";
+    promptElem.textContent = "Loading prompt...";
+    promptElem.classList.add("placeholder");
     try {
-    const response = await fetch("https://localhost:443/prompt");
-    const data = await response.json();
-    promptElem.textContent = data.prompt;
-    startBtn.textContent = "Start Recording";
-    startBtn.disabled = false;
-    statusDisplay.textContent = "Say the prompt above and record your voice.";
+        const response = await fetch("https://localhost:443/prompt");
+
+        if (response.status === 403) {
+            const result = await response.json();
+            statusDisplay.textContent = result.error || "You are banned due to repeated failed attempts.";
+            startBtn.disabled = true;
+            stopBtn.disabled = true;
+            promptElem.textContent = "";
+            promptElem.classList.remove("placeholder");
+            return;
+        }
+
+        const data = await response.json();
+        promptElem.textContent = data.prompt;
+        promptElem.classList.remove("placeholder");
+        startBtn.textContent = "Start Recording";
+        startBtn.disabled = false;
+        statusDisplay.textContent = "Say the prompt above and record your voice.";
     } catch (err) {
-    statusDisplay.textContent = "Error getting prompt.";
-    startBtn.disabled = true;
-    console.log(err);
+        statusDisplay.textContent = "Error getting prompt.";
+        startBtn.disabled = false;
+        promptElem.textContent = "Prompt unavailable.";
+        promptElem.classList.add("placeholder");
+        console.log(err);
     }
 }
 
 startBtn.onclick = async () => {
     if (!readyToRecord) {
-    await fetchPrompt();
-    readyToRecord = true;
-    return;
+        await fetchPrompt();
+        readyToRecord = true;
+        return;
     }
     audioChunks = [];
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -63,28 +78,35 @@ async function sendAudio() {
     statusDisplay.textContent = "Sending to server...";
 
     try {
-    const response = await fetch("https://localhost:443/detect", {
-        method: "POST",
-        body: formData
-    });
+        const response = await fetch("https://localhost:443/detect", {
+            method: "POST",
+            body: formData
+        });
 
-    if (response.status === 403) {
+        if (response.status === 403) {
+            const result = await response.json();
+            statusDisplay.textContent = result.error || "You are banned due to repeated failed attempts.";
+            startBtn.disabled = true;
+            stopBtn.disabled = true;
+            return;
+        }
+
         const result = await response.json();
-        statusDisplay.textContent = result.error || "You are banned due to repeated failed attempts.";
-        startBtn.disabled = true;
-        stopBtn.disabled = true;
-        return;
-    }
-
-    const result = await response.json();
-    statusDisplay.textContent = `Result: ${result.approved ? "Human ✅" : "AI ❌"} (Confidence: ${result.confidence}%)`;
-    
-    // Reset for next attempt
-    startBtn.textContent = "Get Prompt";
-    readyToRecord = false;
-    startBtn.disabled = false;
+        // Build a nice result box
+        let resultHtml = "";
+        if (result.approved) {
+            resultHtml = `<span class='result-box approved'>✅ Human<br><span style='font-size:0.9em;color:#8be9fd;'>Confidence: ${result.confidence}%</span></span>`;
+        } else {
+            resultHtml = `<span class='result-box rejected'>❌ AI<br><span style='font-size:0.9em;color:#8be9fd;'>Confidence: ${result.confidence}%</span></span>`;
+        }
+        statusDisplay.innerHTML = resultHtml;
+        // Reset for next attempt
+        startBtn.textContent = "Get Prompt";
+        promptElem.textContent = "";
+        readyToRecord = false;
+        startBtn.disabled = false;
     } catch (err) {
-    statusDisplay.textContent = "Error sending audio.";
-    console.error(err);
+        statusDisplay.textContent = "Error sending audio.";
+        console.error(err);
     }
 }

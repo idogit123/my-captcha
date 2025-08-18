@@ -3,14 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <title>Voice CAPTCHA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Record your voice (5s)</h1>
-  <p id="prompt" style="font-weight:bold;"></p>
-  <button id="startBtn">Get Prompt</button>
-  <button id="stopBtn" disabled>Stop Recording</button>
-  <p id="status"></p>
-
+  <div style="max-width: 520px; width: 100%; margin: 2em auto; background: #232634; border-radius: 12px; box-shadow: 0 4px 24px #0004; padding: 2em 1em;">
+    <h1>🎤 Voice CAPTCHA</h1>
+    <div style="display: flex; justify-content: center; gap: 1em; margin-bottom: 1em; margin-top: 2em;">
+      <button id="startBtn">Get Prompt</button>
+      <button id="stopBtn" disabled>Stop Recording</button>
+    </div>
+    <p id="prompt"></p>
+  </div>
+  <div id="status-container" style="max-width: 520px; width: 100%; margin: 0 auto 2em auto; background: #232634; border-radius: 12px; box-shadow: 0 2px 12px #0002; padding: 1em;">
+    <p id="status"></p>
+  </div>
   <script src="wavEncoder.js"></script>
   <script src="script.js"></script>
 </body>

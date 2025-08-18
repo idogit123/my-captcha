@@ -50,7 +50,6 @@ async def detect_deepfake(request: Request, file: UploadFile = File(...)):
     top = max(result, key=lambda x: x['score'])
     confidence = round(top['score'] * 100)
     approved = top['label'].lower() == 'aivoice' and top['score'] >= 0.9
-
     # If not approved, count failed attempt, if banned return error
     if not approved and failed_attempt(client_ip):
         return JSONResponse(status_code=403, content={"error": "You are banned due to repeated failed attempts."})
