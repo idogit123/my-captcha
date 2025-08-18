@@ -10,6 +10,41 @@ body {
   align-items: center;
   justify-content: center;
 }
+/* Volume Meter Styles */
+#volume-container {
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto 2em auto;
+  background: #232634;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px #0002;
+  padding: 1em;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#volume-meter {
+  width: 80%;
+  height: 24px;
+  background: #282a36;
+  border-radius: 8px;
+  border: 2px solid #44475a;
+  box-shadow: 0 2px 8px #0002;
+  overflow: hidden;
+  position: relative;
+}
+#volume-bar {
+  height: 100%;
+  width: 0%;
+  background: #50fa7b;
+  border-radius: 8px 0 0 8px;
+  transition: width 0.1s, background 0.2s;
+}
+#volume-label {
+  margin-left: 1em;
+  color: #8be9fd;
+  font-size: 1em;
+}
 
 h1 {
   color: #ffb86c;
@@ -123,5 +158,12 @@ button:hover:not(:disabled) {
   }
   #status {
     font-size: 1em;
+  }
+  #volume-meter {
+    width: 60%;
+    height: 18px;
+  }
+  #volume-label {
+    font-size: 0.9em;
   }
 }

@@ -5,6 +5,13 @@ const startBtn = document.getElementById("startBtn");
 const stopBtn = document.getElementById("stopBtn");
 const statusDisplay = document.getElementById("status");
 const promptElem = document.getElementById("prompt");
+const volumeBar = document.getElementById("volume-bar");
+const volumeContainer = document.getElementById("volume-container");
+let volumeAnimationId = null;
+let audioContext = null;
+let analyser = null;
+let sourceNode = null;
+let streamRef = null;
 
 async function fetchPrompt() {
     statusDisplay.textContent = "Getting prompt...";
@@ -47,25 +54,33 @@ startBtn.onclick = async () => {
     }
     audioChunks = [];
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    streamRef = stream;
     mediaRecorder = new MediaRecorder(stream);
 
     mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-    mediaRecorder.onstop = sendAudio;
+    mediaRecorder.onstop = () => {
+        stopVolumeMeter();
+        sendAudio();
+    };
 
     mediaRecorder.start();
     statusDisplay.textContent = "Recording...";
     startBtn.disabled = true;
     stopBtn.disabled = false;
 
+    startVolumeMeter(stream);
+
     // Automatically stop after 5 seconds
     setTimeout(() => stopBtn.click(), 5000);
 };
 
 stopBtn.onclick = () => {
-    mediaRecorder.stop();
-    statusDisplay.textContent = "Stopping...";
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        statusDisplay.textContent = "Stopping...";
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    }
 };
 
 async function sendAudio() {
@@ -109,4 +124,51 @@ async function sendAudio() {
         statusDisplay.textContent = "Error sending audio.";
         console.error(err);
     }
+    stopVolumeMeter();
+    if (streamRef) {
+        streamRef.getTracks().forEach(track => track.stop());
+        streamRef = null;
+    }
+}
+
+function startVolumeMeter(stream) {
+    if (!volumeBar) return;
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    sourceNode = audioContext.createMediaStreamSource(stream);
+    sourceNode.connect(analyser);
+    volumeContainer.style.display = "flex";
+    function animate() {
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteTimeDomainData(dataArray);
+        // Calculate RMS (root mean square) for volume
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+            let val = (dataArray[i] - 128) / 128;
+            sum += val * val;
+        }
+        const rms = Math.sqrt(sum / dataArray.length);
+        const percent = Math.min(1, rms * 2); // scale for UI
+        volumeBar.style.width = (percent * 100) + "%";
+        volumeBar.style.background = percent > 0.6 ? "#ff5555" : percent > 0.3 ? "#ffb86c" : "#50fa7b";
+        volumeAnimationId = requestAnimationFrame(animate);
+    }
+    animate();
+}
+
+function stopVolumeMeter() {
+    if (volumeAnimationId) {
+        cancelAnimationFrame(volumeAnimationId);
+        volumeAnimationId = null;
+    }
+    if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+    }
+    if (volumeBar) {
+        volumeBar.style.width = "0%";
+        volumeBar.style.background = "#44475a";
+    }
+    volumeContainer.style.display = "none";
 }
