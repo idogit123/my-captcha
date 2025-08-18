@@ -1,2 +1,2 @@
-.env
 certificates/server.*
+server/__pycache__/
