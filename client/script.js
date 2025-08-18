@@ -109,11 +109,18 @@ async function sendAudio() {
         const result = await response.json();
         // Build a nice result box
         let resultHtml = "";
-        if (result.approved) {
-            resultHtml = `<span class='result-box approved'>✅ Human<br><span style='font-size:0.9em;color:#8be9fd;'>Confidence: ${result.confidence}%</span></span>`;
-        } else {
-            resultHtml = `<span class='result-box rejected'>❌ AI<br><span style='font-size:0.9em;color:#8be9fd;'>Confidence: ${result.confidence}%</span></span>`;
-        }
+            if (result.approved) {
+                resultHtml = `<span class='result-box approved'>✅ Human<br><span style='font-size:0.9em;color:#8be9fd;'>Confidence: ${result.confidence}%</span></span>`;
+                if (window.confetti) {
+                    window.confetti({
+                        particleCount: 120,
+                        spread: 70,
+                        origin: { y: 0.6 }
+                    });
+                }
+            } else {
+                resultHtml = `<span class='result-box rejected'>❌ AI<br><span style='font-size:0.9em;color:#8be9fd;'>Confidence: ${result.confidence}%</span></span>`;
+            }
         statusDisplay.innerHTML = resultHtml;
         // Reset for next attempt
         startBtn.textContent = "Get Prompt";
