@@ -1,12 +1,16 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Request
+from ban_manager import is_banned, failed_attempt
+from audio_detector import is_audio_deepfake
+from prompt_manager.main import get_random_prompt
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from dotenv import load_dotenv
-from hf_audio_detector import is_audio_deepfake
 from utils import is_file_size_valid
+from dotenv import load_dotenv
 from os import getenv
 import uvicorn
 
+
+# FastAPI app initialization
 app = FastAPI()
 
 # CORS setup
@@ -19,7 +23,11 @@ app.add_middleware(
 )
 
 @app.post("/detect")
-async def detect_deepfake(file: UploadFile = File(...)):
+async def detect_deepfake(request: Request, file: UploadFile = File(...)):
+    client_ip = request.client.host
+    if is_banned(client_ip):
+        return JSONResponse(status_code=403, content={"error": "You are banned due to repeated failed attempts."})
+
     if not file.filename.lower().endswith(".wav"):
         return JSONResponse(status_code=400, content={"error": "Only WAV files are accepted."})
 
@@ -34,6 +42,10 @@ async def detect_deepfake(file: UploadFile = File(...)):
     top = max(result, key=lambda x: x['score'])
     confidence = round(top['score'] * 100)
     approved = top['label'].lower() == 'aivoice' and top['score'] >= 0.9
+
+    # If not approved, count failed attempt, if banned return error
+    if not approved and failed_attempt(client_ip):
+        return JSONResponse(status_code=403, content={"error": "You are banned due to repeated failed attempts."})
 
     return {"approved": approved, "confidence": confidence, 'result': result}
 
