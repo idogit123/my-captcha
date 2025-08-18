@@ -22,6 +22,14 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+@app.get("/prompt")
+async def get_prompt(request: Request):
+    client_ip = request.client.host
+    if is_banned(client_ip):
+        return JSONResponse(status_code=403, content={"error": "You are banned due to repeated failed attempts."})
+    prompt = get_random_prompt(client_ip)
+    return {"prompt": prompt}
+
 @app.post("/detect")
 async def detect_deepfake(request: Request, file: UploadFile = File(...)):
     client_ip = request.client.host
