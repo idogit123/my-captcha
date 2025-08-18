@@ -5,11 +5,12 @@
   <title>Voice CAPTCHA</title>
 </head>
 <body>
-  <h1>Record your voice (5s)</h1>
+  <h1>Record your voice (7s)</h1>
   <button id="startBtn">Start Recording</button>
   <button id="stopBtn" disabled>Stop Recording</button>
   <p id="status"></p>
 
+  <script src="wavEncoder.js"></script>
   <script>
     let mediaRecorder;
     let audioChunks = [];
@@ -22,7 +23,7 @@
       audioChunks = [];
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorder = new MediaRecorder(stream);
-      
+
       mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
       mediaRecorder.onstop = sendAudio;
 
@@ -31,8 +32,8 @@
       startBtn.disabled = true;
       stopBtn.disabled = false;
 
-      // Automatically stop after 5 seconds
-      setTimeout(() => stopBtn.click(), 5000);
+      // Automatically stop after 7 seconds
+      setTimeout(() => stopBtn.click(), 7000);
     };
 
     stopBtn.onclick = () => {
@@ -43,9 +44,11 @@
     };
 
     async function sendAudio() {
-      const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+      // Convert recorded chunks (WebM/Opus) to WAV using wavEncoder.js
+      const wavBlob = await window.chunksToWavBlob(audioChunks);
+
       const formData = new FormData();
-      formData.append("file", audioBlob, "recording.wav");
+      formData.append("file", wavBlob, "recording.wav");
 
       status.textContent = "Sending to server...";
 
@@ -56,8 +59,7 @@
         });
 
         const result = await response.json();
-        status.textContent = `Result: ${result.approved ? "Human ✅" : "AI ❌"}`;
-        console.log(result);
+        status.textContent = `Result: ${result.approved ? "Human ✅" : "AI ❌"} (Confidence: ${result.confidence}%)`;
       } catch (err) {
         status.textContent = "Error sending audio.";
         console.error(err);

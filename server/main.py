@@ -1,9 +1,10 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import requests
-import os
 from dotenv import load_dotenv
+from hf_audio_detector import is_audio_deepfake
+from utils import is_file_size_valid
+from os import getenv
 import uvicorn
 
 app = FastAPI()
@@ -17,29 +18,24 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-HUGGING_FACE_API_URL = os.getenv("HUGGING_FACE_API_URL")
-HUGGING_FACE_API_TOKEN = os.getenv("HF_API_TOKEN")
-
-
 @app.post("/detect")
 async def detect_deepfake(file: UploadFile = File(...)):
-    # Read file
-    audio_bytes = await file.read()
-    headers = {
-        "Authorization": f"Bearer {HUGGING_FACE_API_TOKEN}",
-        "Content-Type": "application/octet-stream"
-    }
+    if not file.filename.lower().endswith(".wav"):
+        return JSONResponse(status_code=400, content={"error": "Only WAV files are accepted."})
 
-    response = requests.post(HUGGING_FACE_API_URL, headers=headers, data=audio_bytes)
+    if not is_file_size_valid(file.file, int(getenv("MAX_AUDIO_FILE_SIZE"))):
+        return JSONResponse(status_code=400, content={"error": "Audio file is too large. Maximum allowed is 1MB (about 30 seconds)."})
+
+    result = is_audio_deepfake(file.file)
+
+    if not result or not isinstance(result, list):
+        return JSONResponse(status_code=500, content={"error": "Model did not return a valid result."})
     
-    if response.status_code != 200:
-        print("Error:", response.text, "Status Code:", response.status_code)
-        return JSONResponse(status_code=500, content={"error": response.text, "status": response.status_code})
-    result = response.json()
+    top = max(result, key=lambda x: x['score'])
+    confidence = round(top['score'] * 100)
+    approved = top['label'].lower() == 'aivoice' and top['score'] >= 0.9
 
-    # Interpret result (customize based on model output)
-    approved = result.get("label", "real") == "real"
-    return {"approved": approved, "details": result}
+    return {"approved": approved, "confidence": confidence, 'result': result}
 
 @app.get("/")
 async def root():
