@@ -139,3 +139,4 @@ Important: first open `https://localhost:443` in Chrome and accept/trust the cer
 ## Thanks
 
 Thanks to my brother Uri who helped test and came up with many cool ideas like the volume meter and the confetti.
+I also want to thank Eyal Englender for being the cyber GOAT.
