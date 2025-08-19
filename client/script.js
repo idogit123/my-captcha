@@ -7,17 +7,88 @@ const statusDisplay = document.getElementById("status");
 const promptElem = document.getElementById("prompt");
 const volumeBar = document.getElementById("volume-bar");
 const volumeContainer = document.getElementById("volume-container");
+const resultsBox = document.getElementById("results-box");
 let volumeAnimationId = null;
 let audioContext = null;
 let analyser = null;
 let sourceNode = null;
 let streamRef = null;
 
+const deepfakeResults = document.getElementById("deepfake-results");
+const sttResults = document.getElementById("stt-results");
+const finalResults = document.getElementById("final-results");
+const deepfakeLabel = document.getElementById("deepfake-label");
+const deepfakeConfidence = document.getElementById("deepfake-confidence");
+const sttTranscription = document.getElementById("stt-transcription");
+const sttPrompt = document.getElementById("stt-prompt");
+const sttSimilarity = document.getElementById("stt-similarity");
+const finalResultP = document.querySelector("#final-results p");
+
+hideResults();
+
+function hideResults() {
+    // Hide all result sections except the Results title
+    deepfakeResults.style.display = "none";
+    sttResults.style.display = "none";
+    finalResults.style.display = "none";
+
+    // Also clear their contents
+    deepfakeLabel.textContent = "";
+    deepfakeConfidence.textContent = "";
+    sttTranscription.textContent = "";
+    sttPrompt.textContent = "";
+    sttSimilarity.textContent = "";
+    finalResultP.textContent = "";
+
+    [deepfakeLabel, deepfakeConfidence, sttSimilarity, finalResultP].forEach(el => el.classList.remove("flashy"));
+}
+
+// When you want to show results again (after filling them), add:
+function showResults(result) {
+    // Helper to show with slide animation
+    function slideIn(element) {
+        element.style.display = "";
+        element.classList.add("slide-in");
+        setTimeout(() => {
+            element.classList.remove("slide-in");
+        }, 600);
+    }
+
+    // Show results one by one with delays
+    slideIn(deepfakeResults);
+    if (result.approved && !result.details.deepfake.is_deepfake) {
+        showConfetti();
+    }
+    setTimeout(() => {
+        slideIn(sttResults);
+        if (result.approved && result.details.stt.similarity > 85) {
+            showConfetti();
+        }
+    }, 650);
+    setTimeout(() => {
+        slideIn(finalResults);
+        if (result.approved) {
+            showConfetti();
+        }
+    }, 1300);
+}
+
+function showConfetti() {
+    if (window.confetti) {
+        window.confetti({
+            particleCount: 120,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    }
+}
+
 async function fetchPrompt() {
     statusDisplay.textContent = "Getting prompt...";
     startBtn.disabled = true;
     promptElem.textContent = "Loading prompt...";
     promptElem.classList.add("placeholder");
+    hideResults();
     try {
         const response = await fetch("https://localhost:443/prompt");
 
@@ -103,33 +174,66 @@ async function sendAudio() {
             statusDisplay.textContent = result.error || "You are banned due to repeated failed attempts.";
             startBtn.disabled = true;
             stopBtn.disabled = true;
+            hideResults();
+            return;
+        }
+
+        if (response.status === 400) {
+            const result = await response.json();
+            statusDisplay.textContent = result.error || "Bad request.";
+            hideResults();
             return;
         }
 
         const result = await response.json();
-        // Build a nice result box
-        let resultHtml = "";
+
+        // Fill Deepfake Results
+        const deepfake = result.details.deepfake;
+        deepfakeConfidence.textContent = `${deepfake.confidence}%`;
+        if (deepfake.is_deepfake) {
+            deepfakeLabel.textContent = "AI";
+            deepfakeLabel.style.color = "#ff5555";
+            deepfakeConfidence.style.color = "#ff5555";
+        } else {
+            deepfakeLabel.textContent = "Human";
+            deepfakeLabel.style.color = "#50fa7b";
+            deepfakeConfidence.style.color = "#50fa7b";
+        }
+
+        // Fill Speech-to-Text Results
+        const stt = result.details.stt;
+        sttTranscription.textContent = stt.text;
+        sttPrompt.textContent = stt.prompt;
+        sttSimilarity.textContent = `${stt.similarity}%`;
+        if (stt.similarity > 85) {
+            sttSimilarity.style.color = "#50fa7b";
+        } else {
+            sttSimilarity.style.color = "#ff5555";
+        }
+
+        // Fill Final Results
+        finalResultP.textContent = result.approved ? "You are approved" : "You are rejected";
+
+        // Flashy effect only if approved
+        [deepfakeLabel, deepfakeConfidence, sttSimilarity, finalResultP].forEach(el => {
             if (result.approved) {
-                resultHtml = `<span class='result-box approved'>✅ Human<br><span style='font-size:0.9em;color:#8be9fd;'>Confidence: ${result.confidence}%</span></span>`;
-                if (window.confetti) {
-                    window.confetti({
-                        particleCount: 120,
-                        spread: 70,
-                        origin: { y: 0.6 }
-                    });
-                }
+                el.classList.add("flashy");
             } else {
-                resultHtml = `<span class='result-box rejected'>❌ AI<br><span style='font-size:0.9em;color:#8be9fd;'>Confidence: ${result.confidence}%</span></span>`;
+                el.classList.remove("flashy");
             }
-        statusDisplay.innerHTML = resultHtml;
+        });
+
+        showResults(result);
+
         // Reset for next attempt
+        statusDisplay.textContent = "";
         startBtn.textContent = "Get Prompt";
         promptElem.textContent = "";
         readyToRecord = false;
         startBtn.disabled = false;
     } catch (err) {
         statusDisplay.textContent = "Error sending audio.";
-        console.error(err);
+        console.log(err)
     }
     stopVolumeMeter();
     if (streamRef) {
@@ -177,5 +281,4 @@ function stopVolumeMeter() {
         volumeBar.style.width = "0%";
         volumeBar.style.background = "#44475a";
     }
-    volumeContainer.style.display = "none";
 }

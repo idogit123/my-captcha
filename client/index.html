@@ -5,25 +5,46 @@
   <title>Voice CAPTCHA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-  <div style="max-width: 520px; width: 100%; margin: 2em auto; background: #232634; border-radius: 12px; box-shadow: 0 4px 24px #0004; padding: 2em 1em;">
-    <h1>🎤 Voice CAPTCHA</h1>
-    <div style="display: flex; justify-content: center; gap: 1em; margin-bottom: 1em; margin-top: 2em;">
-      <button id="startBtn">Get Prompt</button>
-      <button id="stopBtn" disabled>Stop Recording</button>
-    </div>
-    <p id="prompt"></p>
-  </div>
-    <div id="volume-container">
-      <div id="volume-meter">
-        <div id="volume-bar"></div>
+  <div id="main-container">
+    <div id="left-container">
+      <h1>🎤 Voice CAPTCHA</h1>
+      <div id="button-container">
+        <button id="startBtn">Get Prompt</button>
+        <button id="stopBtn" disabled>Stop Recording</button>
       </div>
-      <span id="volume-label">Volume</span>
+      <p id="prompt"></p>
+      <div id="volume-container">
+        <span id="volume-label">Volume</span>
+        <div id="volume-meter">
+          <div id="volume-bar"></div>
+        </div>
+      </div>
+      <div id="status-container">
+        <p id="status"></p>
+      </div>
     </div>
-  <div id="status-container" style="max-width: 520px; width: 100%; margin: 0 auto 2em auto; background: #232634; border-radius: 12px; box-shadow: 0 2px 12px #0002; padding: 1em;">
-    <p id="status"></p>
+    <div id="right-container">
+      <h2>Results:</h2>
+      <div id="deepfake-results">
+        <h3>Deepfake Detection Results:</h3>
+        <p><span id="deepfake-label"></span> confidence: <span id="deepfake-confidence"></span></p>
+      </div>
+      <div id="stt-results">
+        <h3>Speech-to-Text Results:</h3>
+        <div id="stt-results-container">
+            <p>You said: <span id="stt-transcription"></span></p>
+            <p>Prompt: <span id="stt-prompt"></span></p>
+            <p>Similarity: <span id="stt-similarity"></span></p>
+        </div>
+      </div>
+      <div id="final-results">
+        <h3>Final Results:</h3>
+        <p></p>
+      </div>
+    </div>
   </div>
   <script src="wavEncoder.js"></script>
   <script src="script.js"></script>
