@@ -21,8 +21,8 @@ ui.elements.startBtn.onclick = async () => {
     ui.setStartButton("", true);
     ui.setStopButtonDisabled(false);
 
-    // Automatically stop after 5 seconds
-    stopTimer = setTimeout(() => ui.elements.stopBtn.click(), 5000);
+    // Automatically stop after 10 seconds
+    stopTimer = setTimeout(() => ui.elements.stopBtn.click(), 10000);
   } catch (err) {
     ui.setStatus("Error accessing microphone.");
     console.log(err);
