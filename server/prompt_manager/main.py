@@ -15,7 +15,7 @@ def get_random_prompt(client_ip):
     current_prompts[client_ip] = prompt
     return prompt
 
-def get_current_prompt(client_ip):
+def get_current_prompt(client_ip) -> str | None:
     """
     Get the current prompt for the given client IP.
     Returns None if not found.
