@@ -10,8 +10,12 @@ ui.hideResults();
 
 ui.elements.startBtn.onclick = async () => {
   if (!readyToRecord) {
-    await fetchPrompt();
-    readyToRecord = true;
+    const response = await fetchPrompt();
+    if (response?.error) {
+        readyToRecord = false;
+    }
+    else
+        readyToRecord = true;
     return;
   }
 
