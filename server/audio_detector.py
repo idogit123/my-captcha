@@ -1,8 +1,7 @@
 from transformers import pipeline
-from typing import BinaryIO
 from dotenv import load_dotenv
 from os import getenv
-import io
+from io import BytesIO
 from scipy.io import wavfile
 
 # Load the pipeline for deepfake audio detection
@@ -10,7 +9,7 @@ load_dotenv()
 MODEL_NAME = getenv("MODEL_NAME")
 detector = pipeline("audio-classification", model=MODEL_NAME)
 
-def is_audio_deepfake(audio_file: BinaryIO):
+def is_audio_deepfake(audio_buffer: BytesIO):
     """
     Determines whether the given audio file is a deepfake.
 
@@ -24,7 +23,6 @@ def is_audio_deepfake(audio_file: BinaryIO):
                 {"label": "fake", "score": 0.15}
             ]
     """
-    audio_bytes = audio_file.read()
-    sample_rate, audio_array = wavfile.read(io.BytesIO(audio_bytes))
+    sample_rate, audio_array = wavfile.read(audio_buffer)
     result = detector(audio_array)
     return result

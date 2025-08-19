@@ -1,12 +1,14 @@
 from fastapi import FastAPI, File, UploadFile, Request
 from ban_manager import is_banned, failed_attempt
 from audio_detector import is_audio_deepfake
-from prompt_manager.main import get_random_prompt
+from prompt_manager.main import get_random_prompt, get_current_prompt
+from text_to_speach import transcribe_audio, get_similarity_score
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from utils import is_file_size_valid
 from dotenv import load_dotenv
 from os import getenv
+from io import BytesIO
 import uvicorn
 
 
@@ -42,19 +44,49 @@ async def detect_deepfake(request: Request, file: UploadFile = File(...)):
     if not is_file_size_valid(file.file, int(getenv("MAX_AUDIO_FILE_SIZE"))):
         return JSONResponse(status_code=400, content={"error": "Audio file is too large. Maximum allowed is 1MB (about 30 seconds)."})
 
-    result = is_audio_deepfake(file.file)
+    audio_buffer = BytesIO(file.file.read())
 
-    if not result or not isinstance(result, list):
+    deepfake_result = is_audio_deepfake(audio_buffer)
+    if not deepfake_result or not isinstance(deepfake_result, list):
         return JSONResponse(status_code=500, content={"error": "Model did not return a valid result."})
     
-    top = max(result, key=lambda x: x['score'])
+    current_prompt = get_current_prompt(client_ip)
+    if current_prompt is None:
+        return JSONResponse(status_code=400, content={"error": "You must request a prompt before sending audio."})
+
+    stt_response = transcribe_audio(audio_buffer)
+    if stt_response.get("success") is False:
+        return JSONResponse(status_code=400, content={"error": stt_response.get("error")})
+
+    similarity_score = get_similarity_score(
+        stt_response.get("text"),
+        current_prompt
+    )
+
+    top = max(deepfake_result, key=lambda x: x['score'])
     confidence = round(top['score'] * 100)
-    approved = top['label'].lower() == 'aivoice' and top['score'] >= 0.9
+    is_deepfake = top['label'].lower() == 'humanvoice' and top['score'] >= 0.9
+    approved = not is_deepfake and similarity_score > 85
+
     # If not approved, count failed attempt, if banned return error
     if not approved and failed_attempt(client_ip):
         return JSONResponse(status_code=403, content={"error": "You are banned due to repeated failed attempts."})
 
-    return {"approved": approved, "confidence": confidence, 'result': result}
+    deepfake_details = {
+        "is_deepfake": is_deepfake,
+        "confidence": confidence,
+        "result": deepfake_result
+    }
+    stt_details = {
+        "text": stt_response.get("text"),
+        "prompt": current_prompt,
+        "similarity": similarity_score
+    }
+    details = {
+        "deepfake": deepfake_details,
+        "stt": stt_details
+    }
+    return {"approved": approved, "details": details}
 
 @app.get("/")
 async def root():
