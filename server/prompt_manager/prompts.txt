@@ -1,2 +1,22 @@
-Merry is the best teacher I ever had
-Cyber is my favorite lesson ever
+Always use strong passwords for your accounts
+Install security updates as soon as possible
+Enable two factor authentication on all accounts
+Do not open emails from unknown senders
+Encrypt sensitive files before you send them
+Back up your files to external storage
+Lock your computer when you leave it
+Use a password manager for complex logins
+Verify website addresses before entering login information
+Avoid public Wi Fi for sensitive tasks
+Scan attachments with antivirus before opening them
+Change default router passwords after initial setup
+Report suspicious messages to your administrator immediately
+Check account activity and sign out remotely
+Separate personal and work accounts on devices
+Use a VPN when on public networks
+Enable automatic updates to reduce security risk
+Never share your passwords or security codes
+Test backups regularly to ensure recovery works
+Uninstall unused apps to reduce attack surface
+Merry is the best teacher ever
+Eyal is the goat of cyber
