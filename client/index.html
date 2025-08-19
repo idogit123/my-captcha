@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title>Voice CAPTCHA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Set API base URL here. Change to empty string to use relative paths. -->
+  <meta name="api-base-url" content="https://localhost:443">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -46,7 +48,6 @@
       </div>
     </div>
   </div>
-  <script src="wavEncoder.js"></script>
-  <script src="script.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

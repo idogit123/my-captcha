@@ -1,3 +1,4 @@
+// ES module version of wav encoder. Exports a helper to convert MediaRecorder chunks to WAV Blob.
 function audioBufferToWav(buffer) {
   const numOfChannels = buffer.numberOfChannels;
   const sampleRate = buffer.sampleRate;
@@ -68,11 +69,10 @@ function writeString(view, offset, string) {
   }
 }
 
-// Converts recorded chunks (WebM/Opus) to WAV Blob
-window.chunksToWavBlob = async function(chunks) {
+export async function chunksToWavBlob(chunks) {
   const blob = new Blob(chunks, { type: "audio/webm" });
   const arrayBuffer = await blob.arrayBuffer();
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
   return audioBufferToWav(audioBuffer);
-};
+}

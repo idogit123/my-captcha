@@ -14,7 +14,7 @@ def is_audio_deepfake(audio_buffer: BytesIO):
     Determines whether the given audio file is a deepfake.
 
     Args:
-        audio_file (BinaryIO): A binary stream representing the audio file to be analyzed.
+        audio_buffer (BytesIO): A binary stream representing the audio file to be analyzed.
 
     Returns:
         A list of dictionaries with 'label' and 'score' keys, e.g.
@@ -24,5 +24,9 @@ def is_audio_deepfake(audio_buffer: BytesIO):
             ]
     """
     sample_rate, audio_array = wavfile.read(audio_buffer)
-    result = detector(audio_array)
-    return result
+    try:
+        result = detector(audio_array)
+        return result
+    except Exception as e:
+        print(f"Error occurred while detecting deepfake: {e}")
+        return None

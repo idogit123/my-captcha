@@ -1,8 +1,8 @@
 from fastapi import FastAPI, File, UploadFile, Request
 from ban_manager import is_banned, failed_attempt
 from audio_detector import is_audio_deepfake
-from prompt_manager.main import get_random_prompt, get_current_prompt
-from text_to_speach import transcribe_audio, get_similarity_score
+from prompt_manager.prompt_manager import get_random_prompt, get_current_prompt
+from text_to_speech import transcribe_audio, get_similarity_score
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from utils import is_file_size_valid
@@ -65,6 +65,7 @@ async def detect_deepfake(request: Request, file: UploadFile = File(...)):
 
     top = max(deepfake_result, key=lambda x: x['score'])
     confidence = round(top['score'] * 100)
+    # the model switched the human and ai labels so human means ai
     is_deepfake = top['label'].lower() == 'humanvoice' and top['score'] >= 0.9
     approved = not is_deepfake and similarity_score > 85
 

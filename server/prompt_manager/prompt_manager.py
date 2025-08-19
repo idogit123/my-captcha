@@ -6,7 +6,7 @@ current_prompts = {}
 with open('server/prompt_manager/prompts.txt', 'r') as f:
     prompts = f.readlines()
 
-def get_random_prompt(client_ip):
+def get_random_prompt(client_ip) -> str:
     """
     Get a random prompt for the given client IP.
     And store it in the current_prompts dictionary.
