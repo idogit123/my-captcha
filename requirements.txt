@@ -1,11 +1,11 @@
-fastapi==0.95.2
-uvicorn[standard]==0.22.0
-python-dotenv==1.0.0
-transformers==4.34.0
-torch==2.2.0
-torchaudio==2.2.0
-scipy==1.10.1
-SpeechRecognition==3.9.0
-fuzzywuzzy==0.18.0
-python-Levenshtein==0.21.1  # optional, improves fuzzywuzzy performance
-cryptography==41.0.5
+fastapi
+uvicorn[standard]
+python-dotenv
+transformers
+torch
+torchaudio
+scipy
+SpeechRecognition
+fuzzywuzzy
+python-Levenshtein  # optional, improves fuzzywuzzy performance
+cryptography
